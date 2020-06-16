@@ -18,7 +18,6 @@
 #define TIMER_USED PCF8523_Timer_Countdown_B // which timer
 
 RTC_PCF8523 rtc;
-Pcf8523TimerState state;
 
 void setup () {
   Serial.begin(9600);
@@ -32,16 +31,18 @@ void setup () {
   pinMode(MONITOR_PIN, INPUT_PULLUP);
 
   // set timer to run
-  state.enabled = true;
-  state.value = 10;
-  state.freq = PCF8523_FrequencySecond;
-  state.irupt_state.irupt_flag = false;
-  state.irupt_state.irupt_enabled = true;
+  Pcf8523TimerState state = {
+    10,     // timer value
+    PCF8523_FrequencySecond, // timer frequency
+    true,   // timer set to run
+    false,  // timer interrupt flag (when timer has gone off)
+    true    // timer flag -> signal enable
+  };
 
-  rtc.write_timer(TIMER_USED, &state);
+  rtc.write_timer(TIMER_USED, state);
 
   // dump timer info, for debug purposes
-  rtc.read_timer(TIMER_USED, &state);
+  state = rtc.read_timer(TIMER_USED);
   Serial.println("Timer Set Up:");
   Serial.print("timer value: ");
   Serial.print(state.value, DEC);
@@ -51,9 +52,9 @@ void setup () {
   Serial.print(state.freq, DEC);
   Serial.println();
   Serial.print("irupt flag: ");
-  Serial.print(state.irupt_state.irupt_flag, DEC);
+  Serial.print(state.irupt_flag, DEC);
   Serial.print(", enabled: ");
-  Serial.print(state.irupt_state.irupt_enabled, DEC);
+  Serial.print(state.irupt_enabled, DEC);
   Serial.println();
   Serial.print("Monitor pin reading: ");
   Serial.println(digitalRead(MONITOR_PIN) ? "HIGH": "LOW");
@@ -76,9 +77,7 @@ void loop () {
 
   // reset the interrupt for the next wait
   Serial.println("Resetting the interrupt flag for the next wait round");
-  Pcf8523IruptState irupt;
-  rtc.read_irupt(TIMER_USED, &irupt);
-
+  Pcf8523IruptState irupt = rtc.read_irupt(TIMER_USED);
   irupt.irupt_flag = false;
-  rtc.write_irupt(TIMER_USED, &irupt);
+  rtc.write_irupt(TIMER_USED, irupt);
 }

@@ -1278,18 +1278,20 @@ extern const Pcf8523TimerDetails timer_details_table[];
 
     @brief Reads the interrupt state into dest for the given interrupt.
     @param irupt Which interrupt to read.
-    @param dest The IruptState struct where the current interrupt state is written.
+    @return IruptState struct with the interrupt state
 */
 /**************************************************************************/
-void RTC_PCF8523::read_irupt(Pcf8523Timer irupt, Pcf8523IruptState *dest) {
+Pcf8523IruptState RTC_PCF8523::read_irupt(Pcf8523Timer irupt) {
   /* read the interrupt's register fields into the struct */
 
   const Pcf8523TimerDetails *timer_details = &(timer_details_table[irupt]);
 
   const uint8_t irupt_reg = read_PCF8523_register(timer_details->irupt_control_register);
 
-  dest->irupt_flag = irupt_reg & timer_details->irupt_flag_mask;
-  dest->irupt_enabled = irupt_reg & timer_details->irupt_en_mask;
+  return {
+    irupt_reg & timer_details->irupt_flag_mask,
+    irupt_reg & timer_details->irupt_en_mask
+  };
 }
 
 /**************************************************************************/
@@ -1300,7 +1302,7 @@ void RTC_PCF8523::read_irupt(Pcf8523Timer irupt, Pcf8523IruptState *dest) {
     @param src The IruptState struct that programs the interrupt.
 */
 /**************************************************************************/
-void RTC_PCF8523::write_irupt(Pcf8523Timer irupt, Pcf8523IruptState *src) {
+void RTC_PCF8523::write_irupt(Pcf8523Timer irupt, const Pcf8523IruptState &src) {
   /* write the given interrupt into its register fields */
 
   const Pcf8523TimerDetails *timer_details = &(timer_details_table[irupt]);
@@ -1310,11 +1312,11 @@ void RTC_PCF8523::write_irupt(Pcf8523Timer irupt, Pcf8523IruptState *src) {
   // clear out flag/en, and selectively re-add
   irupt_reg &= ~(timer_details->irupt_flag_mask | timer_details->irupt_en_mask);
 
-  if (src->irupt_enabled) {
+  if (src.irupt_enabled) {
     irupt_reg |= timer_details->irupt_en_mask;
   }
 
-  if (src->irupt_flag) {
+  if (src.irupt_flag) {
     irupt_reg |= timer_details->irupt_flag_mask;
   }
 
@@ -1333,7 +1335,7 @@ void RTC_PCF8523::write_irupt(Pcf8523Timer irupt, Pcf8523IruptState *src) {
     Instead, the INT function will be used.
 */
 /**************************************************************************/
-void RTC_PCF8523::write_timer(Pcf8523Timer timer, Pcf8523TimerState *src) {
+void RTC_PCF8523::write_timer(Pcf8523Timer timer, const Pcf8523TimerState &src) {
   /* setup the given timer in TimerState src */
 
   const Pcf8523TimerDetails *details = &(timer_details_table[timer]);
@@ -1344,19 +1346,23 @@ void RTC_PCF8523::write_timer(Pcf8523Timer timer, Pcf8523TimerState *src) {
   write_PCF8523_register(details->timer_en_register, clkout_ctrl);
 
   // set the timer value and frequencies
-  write_PCF8523_register(details->timer_value_register, src->value);
-  write_PCF8523_register(details->timer_freq_register, (uint8_t) src->freq);
+  write_PCF8523_register(details->timer_value_register, src.value);
+  write_PCF8523_register(details->timer_freq_register, (uint8_t) src.freq);
 
   // set the irupt flag/enable bits -- delegate to other function
-  write_irupt(timer, &(src->irupt_state));
+  Pcf8523IruptState irupt;
+  irupt.irupt_flag = src.irupt_flag;
+  irupt.irupt_enabled = src.irupt_enabled;
+
+  write_irupt(timer, irupt);
 
   // enable the timer, if set
-  if (src->enabled) {
+  if (src.enabled) {
     clkout_ctrl = read_PCF8523_register(details->timer_en_register);
 
     // turn off the CLKOUT function if the interrupt is enabled,
     // enable the timer
-    if (src->irupt_state.irupt_enabled) {
+    if (src.irupt_enabled) {
       clkout_ctrl |= PCF8523_CLKOUT_DIS;
     }
     clkout_ctrl |= details->timer_en_mask;
@@ -1370,30 +1376,38 @@ void RTC_PCF8523::write_timer(Pcf8523Timer timer, Pcf8523TimerState *src) {
 
     @brief Reads the state of selected timer into the given TimerState struct.
     @param timer Which timer to read.
-    @param dest The TimerState struct where the current timer state is written.
+    @return TimerState struct with the current timer state
 */
 /**************************************************************************/
-void RTC_PCF8523::read_timer(Pcf8523Timer timer, Pcf8523TimerState *dest) {
+Pcf8523TimerState RTC_PCF8523::read_timer(Pcf8523Timer timer) {
   /* return the timer contents into TimerState */
 
   const Pcf8523TimerDetails *details = &(timer_details_table[timer]);
 
   // retrieve the timer enabled bit
   uint8_t clkout_ctrl = read_PCF8523_register(details->timer_en_register);
-  dest->enabled = clkout_ctrl & details->timer_en_mask;
+  const bool enabled = clkout_ctrl & details->timer_en_mask;
 
   // retrieve the frequency scalar from the timer's register
   // frequency scalar can include pulse width in the same register, and needs to be checked
   uint8_t raw_freq = read_PCF8523_register(details->timer_freq_register);
   raw_freq = (raw_freq > PCF8523_FrequencyHour) ? PCF8523_FrequencyHour : raw_freq;
 
-  dest->freq = static_cast<PCF8523TimerClockFreq>(raw_freq);
+  const PCF8523TimerClockFreq freq = static_cast<PCF8523TimerClockFreq>(raw_freq);
 
   // retrieve the timer value from the timer's register
-  dest->value = read_PCF8523_register(details->timer_value_register);
+  const uint8_t value = read_PCF8523_register(details->timer_value_register);
 
   // read the irupt flag/enable bits -- delegate to other function
-  read_irupt(timer, &(dest->irupt_state));
+  Pcf8523IruptState irupt = read_irupt(timer);
+
+  return {
+    value,
+    freq,
+    enabled,
+    irupt.irupt_flag,
+    irupt.irupt_enabled
+    };
 }
 
 
