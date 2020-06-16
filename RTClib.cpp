@@ -1383,7 +1383,11 @@ void RTC_PCF8523::read_timer(Pcf8523Timer timer, Pcf8523TimerState *dest) {
   dest->enabled = clkout_ctrl & details->timer_en_mask;
 
   // retrieve the frequency scalar from the timer's register
-  dest->freq = (PCF8523TimerClockFreq) read_PCF8523_register(details->timer_freq_register);
+  // frequency scalar can include pulse width in the same register, and needs to be checked
+  uint8_t raw_freq = read_PCF8523_register(details->timer_freq_register);
+  raw_freq = (raw_freq > PCF8523_FrequencyHour) ? PCF8523_FrequencyHour : raw_freq;
+
+  dest->freq = static_cast<PCF8523TimerClockFreq>(raw_freq);
 
   // retrieve the timer value from the timer's register
   dest->value = read_PCF8523_register(details->timer_value_register);
