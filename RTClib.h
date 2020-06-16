@@ -31,8 +31,8 @@ class TimeSpan;
 #define PCF8523_CONTROL_1 0x00     ///< Control and status register 1
 #define PCF8523_CONTROL_2 0x01     ///< Control and status register 2
 #define PCF8523_CONTROL_3 0x02     ///< Control and status register 3
-#define PCF8523_TIMER_A_FRCTL 0x10  ///< Timer A frequency divider register
-#define PCF8523_TIMER_A_VALUE 0x11  ///< Timer A count value register
+#define PCF8523_TIMER_A_FRCTL 0x10 ///< Timer A frequency divider register
+#define PCF8523_TIMER_A_VALUE 0x11 ///< Timer A count value register
 #define PCF8523_TIMER_B_FRCTL 0x12 ///< Timer B source clock frequency control
 #define PCF8523_TIMER_B_VALUE 0x13 ///< Timer B value (number clock periods)
 #define PCF8523_OFFSET 0x0E        ///< Offset register
@@ -57,7 +57,8 @@ class TimeSpan;
 #define SECONDS_FROM_1970_TO_2000                                              \
   946684800 ///< Unixtime for 2000-01-01 00:00:00, useful for initialization
 
-#define PCF8523_CLKOUT_DIS ((0x7) << 3) ///< bit pattern for disabling the CLKOUT function
+#define PCF8523_CLKOUT_DIS                                                     \
+  ((0x7) << 3) ///< bit pattern for disabling the CLKOUT function
 
 /**************************************************************************/
 /*!
@@ -363,8 +364,8 @@ enum Pcf8523Timer {
 
 /** Current state of an interrupt */
 typedef struct {
-  bool irupt_flag;     ///< whether the timer has gone off
-  bool irupt_enabled;  ///< whether the flag state is tied to the interrupt pin state
+  bool irupt_flag;    ///< whether the timer has gone off
+  bool irupt_enabled; ///< whether the flag state is tied to the interrupt pin
 } Pcf8523IruptState;
 
 /**************************************************************************/
@@ -381,11 +382,11 @@ typedef struct {
 */
 /**************************************************************************/
 typedef struct {
-  uint8_t value;  ///< the current value of the timer
-  PCF8523TimerClockFreq freq;     ///< the clock divider used
-  bool enabled;   ///< whether the timer is running
-  bool irupt_flag;                ///< the interrupt flag
-  bool irupt_enabled;             ///< the interrupt signal enable
+  uint8_t value;              ///< the current value of the timer
+  PCF8523TimerClockFreq freq; ///< the clock divider used
+  bool enabled;               ///< whether the timer is running
+  bool irupt_flag;            ///< the interrupt flag
+  bool irupt_enabled;         ///< the interrupt signal enable
 } Pcf8523TimerState;
 
 /** registers and masks for interacting with a timer */
@@ -402,9 +403,12 @@ typedef struct {
 
 /** look-up table for each timer, in enumerated order */
 const Pcf8523TimerDetails timer_details_table[] = {
-  { PCF8523_CLKOUTCONTROL, bit(1), (bit(1) | bit(2)), PCF8523_TIMER_A_VALUE, PCF8523_TIMER_A_FRCTL, PCF8523_CONTROL_2, bit(6), bit(1) }, /**< Timer A */
-  { PCF8523_CLKOUTCONTROL, bit(2), (bit(1) | bit(2)), PCF8523_TIMER_A_VALUE, PCF8523_TIMER_A_FRCTL, PCF8523_CONTROL_2, bit(7), bit(2) }, /**< WDT A */
-  { PCF8523_CLKOUTCONTROL, bit(0), bit(0), PCF8523_TIMER_B_VALUE, PCF8523_TIMER_B_FRCTL, PCF8523_CONTROL_2, bit(5), bit(0) }             /**< Timer B */
+    {PCF8523_CLKOUTCONTROL, bit(1), (bit(1) | bit(2)), PCF8523_TIMER_A_VALUE,
+     PCF8523_TIMER_A_FRCTL, PCF8523_CONTROL_2, bit(6), bit(1)}, /**< Timer A */
+    {PCF8523_CLKOUTCONTROL, bit(2), (bit(1) | bit(2)), PCF8523_TIMER_A_VALUE,
+     PCF8523_TIMER_A_FRCTL, PCF8523_CONTROL_2, bit(7), bit(2)}, /**< WDT A */
+    {PCF8523_CLKOUTCONTROL, bit(0), bit(0), PCF8523_TIMER_B_VALUE,
+     PCF8523_TIMER_B_FRCTL, PCF8523_CONTROL_2, bit(5), bit(0)} /**< Timer B */
 };
 
 /**************************************************************************/
