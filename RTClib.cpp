@@ -1283,8 +1283,8 @@ extern const Pcf8523TimerDetails timer_details_table[];
 /*!
 
     @brief Reads the interrupt state into dest for the given interrupt.
-    @param irupt Which interrupt to read.
-    @return IruptState struct with the interrupt state
+    @param irupt ::Pcf8523Timer Which interrupt to read.
+    @return Pcf8523IruptState struct with the interrupt state
 */
 /**************************************************************************/
 Pcf8523IruptState RTC_PCF8523::read_irupt(Pcf8523Timer irupt) {
@@ -1303,8 +1303,9 @@ Pcf8523IruptState RTC_PCF8523::read_irupt(Pcf8523Timer irupt) {
 /*!
 
     @brief Sets the interrupt state for the given interrupt.
-    @param irupt Which interrupt to read.
-    @param src The IruptState struct that programs the interrupt.
+    @param irupt ::Pcf8523Timer Which interrupt to read.
+    @param src ::Pcf8523IruptState The IruptState struct that programs the
+   interrupt.
 */
 /**************************************************************************/
 void RTC_PCF8523::write_irupt(Pcf8523Timer irupt,
@@ -1334,8 +1335,15 @@ void RTC_PCF8523::write_irupt(Pcf8523Timer irupt,
 /*!
 
     @brief Programs the selected timer from the given TimerState struct.
-    @param timer Which timer to program.
-    @param src The TimerState struct that programs the timer.
+
+    Can be used to start or stop a timer with the enable bit, set a timer's
+    starting value, and set up its interrupts. For modifying a timer's
+    interrupt bits while a timer is running, use RTC_PCF8523::write_irupt
+    directly.
+
+    @param timer ::Pcf8523Timer Which timer to program.
+    @param src ::Pcf8523TimerState The TimerState struct that programs the
+   timer.
 
     @note If the interrupt enable field is set, the square wave/CLKOUT
     function will be disabled, and the SqwPinMode set to "OFF."
@@ -1383,8 +1391,8 @@ void RTC_PCF8523::write_timer(Pcf8523Timer timer,
 /*!
 
     @brief Reads the state of selected timer into the given TimerState struct.
-    @param timer Which timer to read.
-    @return TimerState struct with the current timer state
+    @param timer ::Pcf8523Timer Which timer to read.
+    @return Pcf8523TimerState struct with the current timer state
 */
 /**************************************************************************/
 Pcf8523TimerState RTC_PCF8523::read_timer(Pcf8523Timer timer) {
